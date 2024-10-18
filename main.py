@@ -7,6 +7,7 @@ import plotly
 import plotly.express as px
 import pandas as pd
 import sqlite3
+from datetime import datetime, date
 
 app = Flask(__name__)
 # flask-sqlalchemy to connect to sqlite
@@ -24,7 +25,7 @@ Date,Salesperson,Customer Name,Car Make,Car Model,Car Year,Sale Price,Commission
 
 class Sales(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String(250), nullable=False)
+    date = db.Column(db.Date, nullable=False)
     salesperson = db.Column(db.String(250), nullable=False)
     customer_name = db.Column(db.String(250), nullable=False)
     car_make = db.Column(db.String(250), nullable=False)
@@ -61,7 +62,7 @@ with app.app_context():
     db.create_all()
     for index, row in car_sales_data.iterrows():
         new_car_sale = Sales(
-            date=row['Date'],
+            date=datetime.strptime(row['Date'], '%Y-%m-%d').date(),
             salesperson=row['Salesperson'],
             customer_name=row['Customer Name'],
             car_make=row['Car Make'],

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Sales Data</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .table-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        table {
+            width: 100%;
+            table-layout: auto;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .btn-primary, .btn-success {
+            margin: 5px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-primary:hover, .btn-success:hover {
+            opacity: 0.8;
+        }
+    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <h1>Edit Sales Data</h1>
+    <form method="POST">
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" value="{{ sale.date }}" required>
+        <br>
+        <label for="salesperson">Salesperson:</label>
+        <input type="text" id="salesperson" name="salesperson" value="{{ sale.salesperson }}" required>
+        <br>
+        <label for="customer_name">Customer Name:</label>
+        <input type="text" id="customer_name" name="customer_name" value="{{ sale.customer_name }}" required>
+        <br>
+        <label for="car_make">Car Make:</label>
+        <input type="text" id="car_make" name="car_make" value="{{ sale.car_make }}" required>
+        <br>
+        <label for="car_model">Car Model:</label>
+        <input type="text" id="car_model" name="car_model" value="{{ sale.car_model }}" required>
+        <br>
+        <label for="car_year">Car Year:</label>
+        <input type="number" id="car_year" name="car_year" value="{{ sale.car_year }}" required>
+        <br>
+        <label for="sale_price">Sale Price:</label>
+        <input type="number" id="sale_price" name="sale_price" value="{{ sale.sale_price }}" required>
+        <br>
+        <label for="commission_rate">Commission Rate:</label>
+        <input type="number" step=0.0001 id="commission_rate" name="commission_rate" value="{{ sale.commission_rate }}" required>
+        <br>
+        <label for="commission_earned">Commission Earned:</label>
+        <input type="number" id="commission_earned" name="commission_earned" value="{{ sale.commission_earned }}" required>
+        <br>
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Image</title>
+     <!-- Bootstrap CSS -->
+     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 5%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            
+        }
+        .center-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: top;
+            align-items: top;
+        }
+        .show-data-button {
+            position: absolute;
+            top: 10px;
+            right: 100px;
+        }
+        .top-right-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .top-left-position {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .top-centre {
+            position: absolute;
+            align-content: center;
+            
+        }
+    </style>
+</head>
+<body>
+    <!-- This is the logout button.-->
+    <form action="/logout" method="get" class="top-right-button">
+    <button class="btn btn-danger">Logout</button>
+    </form>
+
+    <!-- This is the logo.-->
+    <div class ="top-center">
+    <img src="static/assets/logo.png" width="200" height="200">
+    </div> 
+
+    <!-- This is the Show Data Buttono.-->
+    <div class="top-left-position">        
+        <form action="/show_sales_data" method="get">
+            <button class= "btn btn-primary btn-lg active">Show Sales Data</button>
+        </form>
+    </div>
+
+    <!-- Here is the centre content div.-->
+    <div class="center-content">
+        <h1>Welcome to Sales Analyzer!</h1>
+        <h2>Please select the type of graph you want to see</h2>
+        <!-- Here is the dropdown menu.-->
+        <form id="graph-form">
+            <select name="graph_type" onchange="submitForm(this)">
+            <option value="" disabled selected>Select a graph type</option>
+            <option value="/sales_by_car_make">Sales by Car Make</option>
+            <option value="/sales_by_salesperson">Sales by Salesperson</option>
+            </select>
+        </form>
+        <div id="chart"></div>
+
+        <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+        <!-- This is the code for graph change.-->
+        <script type='text/javascript'>
+            // Initial plot
+            var initialGraphs = {{graphJSON | safe}};
+            Plotly.newPlot('chart', initialGraphs.data, initialGraphs.layout);
+            document.getElementById('graph-form').addEventListener('change', function(event) {
+                const selectedValue = event.target.value;
+                if (selectedValue) {
+                    fetch(selectedValue)
+                        .then(response => response.json())
+                        .then(data => {
+                            Plotly.newPlot('chart', data.data, data.layout);
+                        })
+                        .catch(error => console.error('Error fetching data:', error));
+                }
+            });
+        </script>
+        <script>
+            function submitForm(selectElement) {
+            const selectedValue = selectElement.value;
+            if (selectedValue) {
+                window.location.href = selectedValue;
+            }
+            }
+        </script>
+    </div>
+</body>
+</html>

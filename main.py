@@ -17,9 +17,7 @@ app.config["SECRET_KEY"] = "mysecret"
 
 db = SQLAlchemy()
 
-# Load all sales data into a pandas DataFrame
-con = sqlite3.connect("instance/db.sqlite")
-sales_data = pd.read_sql_query("SELECT * from sales", con)
+
 
 '''Column Names are
 Date,Salesperson,Customer Name,Car Make,Car Model,Car Year,Sale Price,Commission Rate,Commission Earned'''
@@ -32,7 +30,7 @@ class Sales(db.Model):
     car_make = db.Column(db.String(250), nullable=False)
     car_model = db.Column(db.String(250), nullable=False)
     car_year = db.Column(db.Integer(), nullable=False)
-    sale_price = db.Column(db.String(250), nullable=False)
+    sale_price = db.Column(db.Integer(), nullable=False)
     commission_rate = db.Column(db.Float(), nullable=False)
     commission_earned = db.Column(db.Float(), nullable=False)
 
@@ -59,6 +57,9 @@ with app.app_context():
     db.session.execute(db.text('DROP TABLE IF EXISTS sales'))
     db.session.commit()
 
+
+
+
 with app.app_context():
     db.create_all()
     for index, row in car_sales_data.iterrows():
@@ -76,6 +77,11 @@ with app.app_context():
         db.session.add(new_car_sale)
     db.session.commit()
     print("Car sales data loaded successfully.")
+
+
+# Load all sales data into a pandas DataFrame
+con = sqlite3.connect("instance/db.sqlite")
+sales_data = pd.read_sql_query("SELECT * from sales", con)
 
 #Initializing loginManager
 loginManager = LoginManager()
@@ -105,7 +111,7 @@ def login():
         else:
             return "Invalid credentials"
 
-    return render_template("login.html")
+    return render_template("home.html")
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -256,20 +262,56 @@ def sales_by_car_make():
 
     return render_template("first_page.html", graphJSON=graphJSON)
 
+
+@app.route('/compare_sales_2022_2023', methods=['GET'])
+def compare_sales_2022_2023():
+    global sales_data
+
+    # Filter data for the years 2022 and 2023
+    sales_data['date'] = pd.to_datetime(sales_data['date'])
+    sales_data['year'] = sales_data['date'].dt.year
+    sales_2022 = sales_data[sales_data['year'] == 2022]
+    sales_2023 = sales_data[sales_data['year'] == 2023]
+
+    # Group by car make and sum the sale prices for each year
+    sales_2022_grouped = sales_2022.groupby('car_make')['sale_price'].sum().reset_index()
+    sales_2023_grouped = sales_2023.groupby('car_make')['sale_price'].sum().reset_index()
+
+    # Merge the two dataframes on car make
+    comparison_df = pd.merge(sales_2022_grouped, sales_2023_grouped, on='car_make', how='outer', suffixes=('_2022', '_2023')).fillna(0)
+
+    
+    # Create a bar chart comparing sales in 2022 and 2023
+    fig = px.bar(comparison_df, y='car_make', x=['sale_price_2022', 'sale_price_2023'], barmode='group', labels={'value': 'Total Sale Price', 'car_make': 'Car Make'})
+
+    # Create graphJSON
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template("first_page.html", graphJSON=graphJSON)
+
+
 @app.route('/delete_sales_record/<int:id>', methods=['POST'])
 def delete_sales_record(id):
     print("Deleting record with id: ", id)
     sale = Sales.query.get_or_404(id)
     db.session.delete(sale)
     db.session.commit()
+    reload_from_db()
     return redirect(url_for('show_sales_data'))
+
+def reload_from_db():
+    global sales_data
+    # Reload all sales data from the database
+    con = sqlite3.connect("instance/db.sqlite")
+    sales_data = pd.read_sql_query("SELECT * from sales", con)
+    con.close()
 
 
 @app.route('/edit_sales_record/<int:id>', methods=['GET', 'POST'])
 def edit_sales_record(id):
     sale = Sales.query.get_or_404(id)
     if request.method == 'POST':
-        sale.date = request.form['date']
+        sale.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         sale.salesperson = request.form['salesperson']
         sale.customer_name = request.form['customer_name']
         sale.car_make = request.form['car_make']
@@ -279,6 +321,7 @@ def edit_sales_record(id):
         sale.commission_rate = request.form['commission_rate']
         sale.commission_earned = request.form['commission_earned']
         db.session.commit()
+        reload_from_db()
         return redirect(url_for('show_sales_data'))
         
     return render_template('edit_sales_record.html', sale=sale)

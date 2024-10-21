@@ -17,8 +17,9 @@ app.config["SECRET_KEY"] = "mysecret"
 
 db = SQLAlchemy()
 
-sales_data = None
-
+# Load all sales data into a pandas DataFrame
+con = sqlite3.connect("instance/db.sqlite")
+sales_data = pd.read_sql_query("SELECT * from sales", con)
 
 '''Column Names are
 Date,Salesperson,Customer Name,Car Make,Car Model,Car Year,Sale Price,Commission Rate,Commission Earned'''
@@ -127,39 +128,52 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
-@app.route('/filter_by', methods=['POST'])
-def filter_by():
+
+
+@app.route('/filter_sales', methods=['GET','POST'])
+def filter_sales():
     global sales_data
     filters = request.form.to_dict()
+    column_name = request.form.get('column_name')
+    column_value = request.form.get('column_value')
     page = 1
     records_per_page = 20
-
-    # Filter the sales data by a value of the column in filters
-    valid_columns = ['date', 'salesperson', 'customer_name', 'car_make', 'car_model', 'car_year', 'sale_price', 'commission_rate', 'commission_earned']
-
     filtered_data = sales_data.copy()
-    for column, value in filters.items():
-        if column in valid_columns:
-            filtered_data = filtered_data[filtered_data[column] == value]
+    filtered_data = filtered_data[filtered_data[column_name] == column_value]
+    sales_data = filtered_data
+    
+    return redirect(url_for('show_sales_data'))
 
-    total_records = len(filtered_data)  # Count the filtered records
+@app.route('/clear_all_filters', methods=['GET'])
+def clear_all_filters():
+    global sales_data
 
-    # Paginate the data
-    start = (page - 1) * records_per_page
-    end = start + records_per_page
-    paginated_sales_data = filtered_data.iloc[start:end]
+    # Reload all sales data from the database
+    con = sqlite3.connect("instance/db.sqlite")
+    sales_data = pd.read_sql_query("SELECT * from sales", con)
+    con.close()
 
-    return render_template('show_sales_data.html', sales=paginated_sales_data.to_dict(orient='records'), total_records=total_records, page=page, records_per_page=records_per_page, filters=filters)
+    return redirect(url_for('show_sales_data'))
+
+SALES_DATA = None
+
+@app.route('/unique_values', methods=['POST'])
+def unique_values():
+    global sales_data
+    column_name = request.form.get('column_name')
+    # Get the list of columns
+    columns = sales_data.columns.tolist()
+    if column_name in columns:
+        unique_values = sales_data[column_name].unique().tolist()
+        return jsonify({"items":unique_values})
+    else:
+        return {"error": "Invalid column name"}, 400
 
 @app.route('/show_sales_data/', defaults={'page': 1, 'records_per_page': 10})
 @app.route('/show_sales_data/page/<int:page>/records_per_page/<int:records_per_page>')
 def show_sales_data(page, records_per_page):
     global sales_data
-    
-    # Load all sales data into a pandas DataFrame
-    con = sqlite3.connect("instance/db.sqlite")
 
-    sales_data = pd.read_sql_query("SELECT * from sales", con)
     
     # Remove all duplicate records
     sales_data = sales_data.drop_duplicates()
@@ -187,11 +201,13 @@ def show_sales_data(page, records_per_page):
 @app.route('/sales_by_salesperson', methods=['GET'])
 def sales_by_salesperson():
     print("Function triggered")
-    # Query the sales data from the database
-    sales_data = Sales.query.all()
+    global sales_data
 
-    # Convert the sales data to a pandas DataFrame
-    sales_df = pd.DataFrame([(s.salesperson, s.sale_price) for s in sales_data], columns=['Salesperson', 'Sale Price'])
+    # Select only the Salesperson and Sale Price columns
+    sales_df = sales_data[['salesperson', 'sale_price']].copy()
+
+    # Rename the columns to Salesperson and Sale Price
+    sales_df.columns = ['Salesperson', 'Sale Price']
 
     # Convert the sale price to numeric
     sales_df['Sale Price'] = pd.to_numeric(sales_df['Sale Price'], errors='coerce')
@@ -214,11 +230,14 @@ def sales_by_salesperson():
 
 @app.route('/sales_by_car_make', methods=['GET'])
 def sales_by_car_make():
-    # Query the sales data from the database
-    sales_data = Sales.query.all()
+    global sales_data
 
-    # Convert the sales data to a pandas DataFrame
-    sales_df = pd.DataFrame([(s.car_make, s.sale_price) for s in sales_data], columns=['Car Make', 'Sale Price'])
+    # Select only the Car Make and Sale Price columns
+    sales_df = sales_data[['car_make', 'sale_price']].copy()
+
+    # Rename the columns to Car Make and Sale Price
+    sales_df.columns = ['Car Make', 'Sale Price']
+
 
     # Convert the sale price to numeric
     sales_df['Sale Price'] = pd.to_numeric(sales_df['Sale Price'], errors='coerce')
@@ -235,11 +254,7 @@ def sales_by_car_make():
     # Create graphJSON
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    #
-    #return jsonify(json.loads(graphJSON))
-
-    #return graphJSON
-    return render_template("first_page.html", graphJSON = graphJSON)
+    return render_template("first_page.html", graphJSON=graphJSON)
 
 @app.route('/delete_sales_record/<int:id>', methods=['POST'])
 def delete_sales_record(id):

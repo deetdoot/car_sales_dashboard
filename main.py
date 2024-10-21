@@ -17,7 +17,8 @@ app.config["SECRET_KEY"] = "mysecret"
 
 db = SQLAlchemy()
 
-
+# Storing Filters in the storage dictionary
+filter_storage = dict()
 
 '''Column Names are
 Date,Salesperson,Customer Name,Car Make,Car Model,Car Year,Sale Price,Commission Rate,Commission Earned'''
@@ -138,10 +139,14 @@ def logout():
 
 @app.route('/filter_sales', methods=['GET','POST'])
 def filter_sales():
-    global sales_data
+    '''
+    Function to filter sales view
+    '''
+    global sales_data, filter_storage
     filters = request.form.to_dict()
     column_name = request.form.get('column_name')
     column_value = request.form.get('column_value')
+    filter_storage[column_name] = column_value
     page = 1
     records_per_page = 20
     filtered_data = sales_data.copy()
@@ -300,10 +305,14 @@ def delete_sales_record(id):
     return redirect(url_for('show_sales_data'))
 
 def reload_from_db():
-    global sales_data
+    global sales_data, filter_storage
     # Reload all sales data from the database
     con = sqlite3.connect("instance/db.sqlite")
     sales_data = pd.read_sql_query("SELECT * from sales", con)
+    # Checking if there are any current filteres to keep up filter storage
+    if filter_storage:
+        for column_name, column_value in filter_storage.items():
+            sales_data = sales_data[sales_data[column_name] == column_value]
     con.close()
 
 
@@ -331,7 +340,7 @@ def add_sales_record():
     # Adding the sales data to the database
     if request.method == 'POST':
         new_sale = Sales(
-            date=request.form['date'],
+            date = datetime.strptime(request.form['date'], '%Y-%m-%d').date(),
             salesperson=request.form['salesperson'],
             customer_name=request.form['customer_name'],
             car_make=request.form['car_make'],
@@ -343,6 +352,7 @@ def add_sales_record():
         )
         db.session.add(new_sale)
         db.session.commit()
+        reload_from_db()
         return redirect(url_for('show_sales_data'))
     
     return render_template('add_sales_record.html')

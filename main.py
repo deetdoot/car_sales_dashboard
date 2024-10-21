@@ -59,8 +59,6 @@ with app.app_context():
     db.session.commit()
 
 
-
-
 with app.app_context():
     db.create_all()
     for index, row in car_sales_data.iterrows():

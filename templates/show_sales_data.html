@@ -77,6 +77,7 @@
         }
 
         .dropdown-content a {
+            position: relative;
             color: black;
             padding: 12px 16px;
             text-decoration: none;
@@ -92,7 +93,14 @@
         }
 
         .submenu {
+            position: absolute;
+            left: 100%;
+            top: 0;
             display: none;
+            min-width: 160px;
+            background-color: white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
         }
 
         .dropdown-content:hover .submenu {
@@ -102,13 +110,27 @@
             background-color: #f9f9f9;
         }
 
-        .submenu {
-            display: none;
-            position: absolute;
-            z-index: 1000;
-            left: 160px;
-            top: 0;
-            background-color: #f9f9f9;
+        .menu-item {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-content > a {
+            position: relative;
+        }
+
+        .dropdown-content > a.active {
+            background-color: #f0f0f0;
+        }
+
+        .dropdown-content > a:hover {
+            background-color: #f0f0f0;
+        }
+
+        .menu-item:hover {
+            background-color: #f5f5f5;
         }
     </style>
     <!-- Font Awesome -->
@@ -132,11 +154,11 @@
                             <div class="dropdown">
                                 <button class="btn btn-info">Filters</button>
                                 <div class="dropdown-content">
-                                    <!-- The 4 options where submenu will appear -->
-                                    <a href="#" onmouseover="fetchSubMenu('car_make', 'submenu1')">Car Make</a>
-                                    <div class="dropdown-content submenu" id="submenu1">
-                                    </div>
-                                    <a href="#" onmouseover="fetchSubMenu('car_model', 'submenu2')">Car Model</a>
+                                    <!-- Added data attribute for easier reference -->
+                                    <a href="#" data-submenu="submenu1" onmouseover="handleSubmenuHover('car_make', 'submenu1', this)">Car Make</a>
+                                    <div class="dropdown-content submenu" id="submenu1"></div>
+                                    
+                                    <a href="#" data-submenu="submenu2" onmouseover="handleSubmenuHover('car_model', 'submenu2', this)">Car Model</a>
                                     <div class="dropdown-content submenu" id="submenu2"></div>
                                 </div>
                             </div>
@@ -144,55 +166,177 @@
                     </div>
 
                     <!-- Clear All Filters Button-->
-                    <a class="btn btn-outline-warning" href="{{url_for('clear_all_filters')}}"> Clear All Filters </a>
+                    <span class="btn btn-outline-warning" onclick="clearFilter()"> Clear All Filters </span>
                     <a class="btn btn-primary" href="{{ url_for('first_page') }}"> Go to Dashboard </a>
 
                     <script>
+                        const selectedFilters = {
+                            car_make: new Set(),
+                            car_model: new Set()
+                        };
+
+                        function saveFiltersToStorage() {
+                            const filtersToSave = {};
+                            Object.keys(selectedFilters).forEach(key => {
+                                filtersToSave[key] = Array.from(selectedFilters[key]);
+                            });
+                            localStorage.setItem('selectedFilters', JSON.stringify(filtersToSave));
+                        }
+
+                        function loadSavedFilters() {
+                            const savedFilters = localStorage.getItem('selectedFilters');
+                            if (savedFilters) {
+                                const parsedFilters = JSON.parse(savedFilters);
+                                
+                                Object.keys(parsedFilters).forEach(key => {
+                                    selectedFilters[key] = new Set(parsedFilters[key]);
+                                });
+                            }
+                        }
+
+                        // Keep track of current open submenu
+                        let currentOpenSubmenu = null;
+
+                        function handleSubmenuHover(columnName, submenuId, element) {
+                            // Hide all submenus first
+                            document.querySelectorAll('.submenu').forEach(submenu => {
+                                submenu.style.display = 'none';
+                            });
+                            
+                            // Remove active class from all menu items
+                            document.querySelectorAll('.dropdown-content > a').forEach(item => {
+                                item.classList.remove('active');
+                            });
+                            
+                            // Add active class to current menu item
+                            element.classList.add('active');
+                            
+                            // Show current submenu
+                            fetchSubMenu(columnName, submenuId);
+                            currentOpenSubmenu = submenuId;
+                        }
+
                         function fetchSubMenu(columnName, submenuId) {
-                            // Make an API call to fetch unique values for the selected option
-                            fetch('/unique_values', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                },
-                                body: `column_name=${columnName}`
-                            })
+                            const submenu = document.getElementById(submenuId);
+                            
+                            // Only fetch if this submenu isn't already populated
+                            if (!submenu.hasChildNodes()) {
+                                fetch('/unique_values', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: `column_name=${columnName}`
+                                })
                                 .then(response => response.json())
                                 .then(data => {
-                                    // Clear previous submenu items for the specific submenu
-                                    let submenu = document.getElementById(submenuId);
                                     submenu.innerHTML = '';
-                                    // Add the new submenu items
+                                    
                                     data.items.forEach(item => {
-                                        let menuItem = document.createElement('a');
-                                        menuItem.textContent = item;
-                                        menuItem.addEventListener('click', function (event) {
-                                            event.preventDefault();
-                                            fetch('/filter_sales', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/x-www-form-urlencoded',
-                                                },
-                                                body: `column_name=${columnName}&column_value=${item}`
-                                            })
+                                        let menuItem = document.createElement('div');
+                                        menuItem.className = 'menu-item';
+                                        
+                                        let checkbox = document.createElement('input');
+                                        checkbox.type = 'checkbox';
+                                        checkbox.id = `${columnName}-${item}`;
+                                        checkbox.checked = selectedFilters[columnName].has(item);
+                                        
+                                        let label = document.createElement('label');
+                                        label.htmlFor = `${columnName}-${item}`;
+                                        label.textContent = item;
+                                        
+                                        checkbox.addEventListener('change', function() {
+                                            if (this.checked) {
+                                                selectedFilters[columnName].add(item);
+                                            } else {
+                                                selectedFilters[columnName].delete(item);
+                                            }
+                                            saveFiltersToStorage();
+                                            applyFilters();
                                         });
+                                        
+                                        menuItem.appendChild(checkbox);
+                                        menuItem.appendChild(label);
                                         submenu.appendChild(menuItem);
                                     });
-                                    // Ensure the submenu is visible only after data is loaded
+                                    
                                     submenu.style.display = 'block';
                                 })
                                 .catch(error => {
                                     console.error('Error fetching submenu:', error);
                                 });
+                            } else {
+                                // If already populated, just show it
+                                submenu.style.display = 'block';
+                            }
+                        }
 
-                            // Hide submenu when the user moves out
-                            document.addEventListener('mouseout', function (event) {
-                                if (!event.target.matches('.dropdown') && !event.target.closest('.dropdown')) {
-                                    let submenus = document.querySelectorAll('.submenu');
-                                    submenus.forEach(submenu => submenu.style.display = 'none'); // Hide submenus
+                        function applyFilters() {
+                            // Create filter object from selected values
+                            const filters = {};
+                            for (let [category, values] of Object.entries(selectedFilters)) {
+                                if (values.size > 0) {
+                                    filters[category] = Array.from(values);
                                 }
+                            }
+                            
+                            // Make API call with all selected filters
+                            fetch('/filter_sales', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(filters)
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.redirect_url) {
+                                    window.location.href = data.redirect_url;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error applying filters:', error);
                             });
                         }
+
+                        function clearFilter() {
+                            console.log('clearFilter')
+                            localStorage.removeItem('selectedFilters');
+                            fetch('/clear_all_filters', {
+                                method: 'GET',
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.redirect_url) {
+                                    window.location.href = data.redirect_url;
+                                }
+                            })
+                        }
+
+                        // Add event listeners when document is ready
+                        document.addEventListener('DOMContentLoaded', function() {
+                            loadSavedFilters();
+                            
+                            // Handle mouse leave for dropdown
+                            document.querySelector('.dropdown').addEventListener('mouseleave', function() {
+                                // Hide all submenus when leaving the dropdown
+                                document.querySelectorAll('.submenu').forEach(submenu => {
+                                    submenu.style.display = 'none';
+                                });
+                                
+                                // Remove active states
+                                document.querySelectorAll('.dropdown-content > a').forEach(item => {
+                                    item.classList.remove('active');
+                                });
+                            });
+
+                            // Keep submenus open while interacting with them
+                            document.querySelectorAll('.submenu').forEach(submenu => {
+                                submenu.addEventListener('mouseenter', function(e) {
+                                    this.style.display = 'block';
+                                });
+                            });
+                        });
 
                     </script>
                     <!-- Adding Table Content -->

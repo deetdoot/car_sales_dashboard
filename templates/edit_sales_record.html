@@ -9,33 +9,25 @@
             padding: 20px;
             background-color: #f8f9fa;
         }
-        .table-container {
-            margin-top: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        table {
-            width: 100%;
-            table-layout: auto;
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
             background-color: #ffffff;
-            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        th, td {
-            text-align: center;
-            vertical-align: middle;
+        .form-group {
+            margin-bottom: 15px;
         }
-        .btn-primary, .btn-success {
-            margin: 5px;
+        .form-group label {
+            font-weight: bold;
         }
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
         }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        .btn-primary:hover, .btn-success:hover {
+        .btn-primary:hover {
             opacity: 0.8;
         }
     </style>
@@ -60,36 +52,47 @@
     </script>
 </head>
 <body>
-    <h1>Edit Sales Data</h1>
-    <form method="POST" onsubmit="return validateForm()">
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" value="{{ sale.date }}" required>
-        <br>
-        <label for="salesperson">Salesperson:</label>
-        <input type="text" id="salesperson" name="salesperson" value="{{ sale.salesperson }}" required>
-        <br>
-        <label for="customer_name">Customer Name:</label>
-        <input type="text" id="customer_name" name="customer_name" value="{{ sale.customer_name }}" required>
-        <br>
-        <label for="car_make">Car Make:</label>
-        <input type="text" id="car_make" name="car_make" value="{{ sale.car_make }}" required>
-        <br>
-        <label for="car_model">Car Model:</label>
-        <input type="text" id="car_model" name="car_model" value="{{ sale.car_model }}" required>
-        <br>
-        <label for="car_year">Car Year:</label>
-        <input type="number" id="car_year" name="car_year" value="{{ sale.car_year }}" required>
-        <br>
-        <label for="sale_price">Sale Price:</label>
-        <input type="number" id="sale_price" name="sale_price" value="{{ sale.sale_price }}" required>
-        <br>
-        <label for="commission_rate">Commission Rate:</label>
-        <input type="number" min=0.0 max=1.0 step="any" id="commission_rate" name="commission_rate" value="{{ sale.commission_rate }}" required>
-        <br>
-        <label for="commission_earned">Commission Earned:</label>
-        <input type="number" step="any" id="commission_earned" name="commission_earned" value="{{ sale.commission_earned }}" required>
-        <br>
-        <button type="submit">Update</button>
-    </form>
+    <div class="form-container">
+        <h1 class="text-center">Edit Sales Data</h1>
+        <form method="POST" onsubmit="return validateForm()">
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ sale.date }}" required>
+            </div>
+            <div class="form-group">
+                <label for="salesperson">Salesperson:</label>
+                <input type="text" class="form-control" id="salesperson" name="salesperson" value="{{ sale.salesperson }}" required>
+            </div>
+            <div class="form-group">
+                <label for="customer_name">Customer Name:</label>
+                <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ sale.customer_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="car_make">Car Make:</label>
+                <input type="text" class="form-control" id="car_make" name="car_make" value="{{ sale.car_make }}" required>
+            </div>
+            <div class="form-group">
+                <label for="car_model">Car Model:</label>
+                <input type="text" class="form-control" id="car_model" name="car_model" value="{{ sale.car_model }}" required>
+            </div>
+            <div class="form-group">
+                <label for="car_year">Car Year:</label>
+                <input type="number" class="form-control" id="car_year" name="car_year" value="{{ sale.car_year }}" required>
+            </div>
+            <div class="form-group">
+                <label for="sale_price">Sale Price:</label>
+                <input type="number" class="form-control" id="sale_price" name="sale_price" value="{{ sale.sale_price }}" required>
+            </div>
+            <div class="form-group">
+                <label for="commission_rate">Commission Rate:</label>
+                <input type="number" class="form-control" min=0.0 max=1.0 step="any" id="commission_rate" name="commission_rate" value="{{ sale.commission_rate }}" required>
+            </div>
+            <div class="form-group">
+                <label for="commission_earned">Commission Earned:</label>
+                <input type="number" class="form-control" step="any" id="commission_earned" name="commission_earned" value="{{ sale.commission_earned }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Update</button>
+        </form>
+    </div>
 </body>
 </html>

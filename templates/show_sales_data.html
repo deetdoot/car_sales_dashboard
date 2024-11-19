@@ -146,7 +146,9 @@
             <section class="content">
                 <div class="container-fluid">
                     <h1 class="text-center">Sales Table</h1>
+                    <button class="btn btn-info" onclick="printPage()">Print</button>
                     <div class="text-center">
+                        
                         <a class="btn btn-success" href="{{ url_for('add_sales_record') }}"><i class="fas fa-plus"></i>
                             Add New Sale</a>
                         <!-- Adding Filter Button -->
@@ -311,6 +313,10 @@
                                     window.location.href = data.redirect_url;
                                 }
                             })
+                        }
+
+                        function printPage() {
+                            window.print();
                         }
 
                         // Add event listeners when document is ready

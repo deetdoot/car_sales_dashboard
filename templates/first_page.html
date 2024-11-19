@@ -67,6 +67,7 @@
     <div class="center-content">
         <h1>Welcome to Sales Analyzer!</h1>
         <h2>Please select the type of graph you want to see</h2>
+        
         <!-- Here is the dropdown menu.-->
         <form id="graph-form">
             <select name="graph_type" onchange="submitForm(this)">
@@ -77,7 +78,6 @@
             </select>
         </form>
         <div id="chart"></div>
-
         <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
         <!-- This is the code for graph change.-->
         <script type='text/javascript'>
@@ -96,13 +96,17 @@
                 }
             });
         </script>
+        <button class="btn btn-info" onclick="printPage()">Print</button>
         <script>
             function submitForm(selectElement) {
             const selectedValue = selectElement.value;
             if (selectedValue) {
                 window.location.href = selectedValue;
             }
-            }
+        }
+        function printPage() {
+            window.print();
+        }
         </script>
     </div>
 </body>

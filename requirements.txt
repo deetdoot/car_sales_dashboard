@@ -1,7 +1,9 @@
 pandas==1.5.3
 numpy==1.23.5
-matplotlib==3.6.2
-seaborn==0.12.1
 dash==2.7.0
 plotly==5.11.0
-flask==2.2.2
+flask==2.2.5
+Werkzeug==2.2.2
+SQLAlchemy==2.0.36
+flask_sqlalchemy==3.1.1
+Flask-Login==0.6.3

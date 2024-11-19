@@ -2,6 +2,13 @@
 """
 This project is a web application built using Flask.
 
+
+How to run:
+
+* Make sure you are on venv
+* Install all the necesarry files
+* Hit flask --app main run
+
 Features:
 - User authentication: Users can log in to access their personalized dashboards.
 - Dashboards: After logging in, users can view various dashboards displaying different graphs and visualizations.

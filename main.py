@@ -128,6 +128,9 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        existing_user = Users.query.filter_by(username=username).first()
+        if existing_user:
+            return "Username already exists. Please choose a different username."
         user = Users(username=username, password=password)
         db.session.add(user)
         db.session.commit()

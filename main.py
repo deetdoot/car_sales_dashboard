@@ -9,18 +9,20 @@ import pandas as pd
 import sqlite3
 from datetime import datetime, date
 
+
+# Credating the Flask app
 app = Flask(__name__)
 # flask-sqlalchemy to connect to sqlite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
 # Declaring the secret key
 app.config["SECRET_KEY"] = "mysecret"
-
+# Initializing the db
 db = SQLAlchemy()
 
 # Storing Filters in the storage dictionary
 filter_storage = dict()
 
-"""Column Names are
+""" Creating a Sales class where Column Names are
 Date,Salesperson,Customer Name,Car Make,Car Model,Car Year,Sale Price,Commission Rate,Commission Earned"""
 
 
@@ -37,7 +39,7 @@ class Sales(db.Model):
     commission_earned = db.Column(db.Float(), nullable=False)
 
 
-# Declaring user model
+# Declaring user model. The columns are username, password
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(10), nullable=False, unique=True)
@@ -60,7 +62,7 @@ with app.app_context():
     db.session.execute(db.text("DROP TABLE IF EXISTS sales"))
     db.session.commit()
 
-
+# Loading the data into the database
 with app.app_context():
     db.create_all()
     for index, row in car_sales_data.iterrows():
@@ -88,22 +90,23 @@ sales_data = pd.read_sql_query("SELECT * from sales", con)
 loginManager = LoginManager()
 loginManager.init_app(app)
 
-
+# Login Manager to load the user
 @loginManager.user_loader
 def load_user(user_id):
     return Users.query.get(user_id)
 
-
+# Home page
 @app.route("/")
 def home():
     return render_template("home.html")
 
-
+# First or Introduction page. This is where the user will be redirected after login
 @app.route("/first_page")
 def first_page():
     return render_template("first_page.html")
 
 
+# Login page
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -118,7 +121,7 @@ def login():
 
     return render_template("home.html")
 
-
+# Register page
 @app.route("/register", methods=["GET", "POST"])
 def register():
     # If the user made a post request, create a new user
@@ -133,13 +136,14 @@ def register():
     # If the user made a get request, return the register page
     return render_template("register.html")
 
-
+# Logout button endpoint
 @app.route("/logout", methods=["GET"])
 def logout():
     logout_user()
     return redirect(url_for("home"))
 
 
+# API that filters the sales data by the given filters
 @app.route("/filter_sales", methods=["GET", "POST"])
 def filter_sales():
     """
@@ -169,6 +173,7 @@ def filter_sales():
     return jsonify({"status": "success", "redirect_url": url_for("show_sales_data")})
 
 
+# API that clears all filters
 @app.route("/clear_all_filters", methods=["GET"])
 def clear_all_filters():
     global sales_data
@@ -183,7 +188,7 @@ def clear_all_filters():
 
 SALES_DATA = None
 
-
+# API that returns the unique values for a given column
 @app.route("/unique_values", methods=["POST"])
 def unique_values():
     column_name = request.form.get("column_name")
@@ -202,7 +207,7 @@ def unique_values():
     else:
         return {"error": "Invalid column name"}, 400
 
-
+#API that returns all the sales data
 @app.route("/show_sales_data/", defaults={"page": 1, "records_per_page": 10})
 @app.route("/show_sales_data/page/<int:page>/records_per_page/<int:records_per_page>")
 def show_sales_data(page, records_per_page):
@@ -237,7 +242,7 @@ def show_sales_data(page, records_per_page):
         filters=filters,
     )
 
-
+# API For the Sales by Salesperson Graph
 @app.route("/sales_by_salesperson", methods=["GET"])
 def sales_by_salesperson():
     print("Function triggered")
@@ -268,6 +273,7 @@ def sales_by_salesperson():
     return render_template("first_page.html", graphJSON=graphJSON)
 
 
+#API for the Sales by Car Make Graph
 @app.route("/sales_by_car_make", methods=["GET"])
 def sales_by_car_make():
     global sales_data
@@ -296,6 +302,7 @@ def sales_by_car_make():
     return render_template("first_page.html", graphJSON=graphJSON)
 
 
+#API for the Sales comparison between 2022 vs 2023 Graph
 @app.route("/compare_sales_2022_2023", methods=["GET"])
 def compare_sales_2022_2023():
     global sales_data
@@ -337,7 +344,7 @@ def compare_sales_2022_2023():
 
     return render_template("first_page.html", graphJSON=graphJSON)
 
-
+# API for the delete button
 @app.route("/delete_sales_record/<int:id>", methods=["POST"])
 def delete_sales_record(id):
     print("Deleting record with id: ", id)
@@ -347,7 +354,7 @@ def delete_sales_record(id):
     reload_from_db()
     return redirect(url_for("show_sales_data"))
 
-
+# Reloading all the changes on the db
 def reload_from_db():
     global sales_data, filter_storage
     # Reload all sales data from the database
@@ -360,7 +367,7 @@ def reload_from_db():
             sales_data = sales_data[sales_data[column_name].isin(column_values)]
     con.close()
 
-
+# API Endpoint for the sales record modification/edition
 @app.route("/edit_sales_record/<int:id>", methods=["GET", "POST"])
 def edit_sales_record(id):
     sale = Sales.query.get_or_404(id)
@@ -380,7 +387,7 @@ def edit_sales_record(id):
 
     return render_template("edit_sales_record.html", sale=sale)
 
-
+# API for adding a sales record
 @app.route("/add_sales_record", methods=["GET", "POST"])
 def add_sales_record():
     # Adding the sales data to the database

@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    image: python:3.9
+    container_name: web
+    command: bash -c "pip install -r requirements.txt && flask --app main run --host=0.0.0.0 --port=5000"
+    volumes:
+      - ./:/app
+    ports:
+      - "${PORT}:5000"
+    working_dir: /app
+    environment:
+      - FLASK_ENV=development
+
+volumes:
+  app_data:
+    driver: local

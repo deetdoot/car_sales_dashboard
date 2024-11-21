@@ -4,10 +4,9 @@ This project is a web application built using Flask.
 
 
 How to run:
-
-* Make sure you are on venv
-* Install all the necesarry files
-* Hit flask --app main run
+* Install and run docker desktop
+* Specify the port in the env file
+* Go to terminal and type docker compose up
 
 Features:
 - User authentication: Users can log in to access their personalized dashboards.

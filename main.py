@@ -161,18 +161,21 @@ def filter_sales():
     con.close()
 
     filtered_data = sales_data_from_db
-
+    # Check if there are any filters present
     if filters:
+        # Loop through the filters
         for column_name, values in filters.items():
             if values:
+                # Filter the data
                 filtered_data = filtered_data[filtered_data[column_name].isin(values)]
-
+                # Store the filters in the filter storage
                 filter_storage[column_name] = values
     else:
         filter_storage = dict()
 
+    # Assign the filtered data to the sales data
     sales_data = filtered_data
-
+    # Return the updated data to the view
     return jsonify({"status": "success", "redirect_url": url_for("show_sales_data")})
 
 
@@ -302,6 +305,7 @@ def sales_by_car_make():
     # Create graphJSON
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
+    # Return the user with the first_page with the graphJSON
     return render_template("first_page.html", graphJSON=graphJSON)
 
 
@@ -344,7 +348,7 @@ def compare_sales_2022_2023():
 
     # Create graphJSON
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
+    # Return the user first_page with the graphJSON
     return render_template("first_page.html", graphJSON=graphJSON)
 
 # API for the delete button
@@ -374,7 +378,7 @@ def reload_from_db():
 @app.route("/edit_sales_record/<int:id>", methods=["GET", "POST"])
 def edit_sales_record(id):
     sale = Sales.query.get_or_404(id)
-    if request.method == "POST":
+    if request.method == "POST": # If the user is submitting anything; commit the changes
         sale.date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
         sale.salesperson = request.form["salesperson"]
         sale.customer_name = request.form["customer_name"]
@@ -387,7 +391,7 @@ def edit_sales_record(id):
         db.session.commit()
         reload_from_db()
         return redirect(url_for("show_sales_data"))
-
+    # Else return user to the sale data edition html page
     return render_template("edit_sales_record.html", sale=sale)
 
 # API for adding a sales record
@@ -410,9 +414,9 @@ def add_sales_record():
         db.session.commit()
         reload_from_db()
         return redirect(url_for("show_sales_data"))
-
+    # Else take the user to the add sales record page
     return render_template("add_sales_record.html")
 
-
+# Starting the app
 if __name__ == "__main__":
     app.run(debug=True)

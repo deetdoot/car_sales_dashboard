@@ -300,7 +300,7 @@
                                 console.error('Error applying filters:', error);
                             });
                         }
-
+                        // Function that is used to clear all the filters
                         function clearFilter() {
                             console.log('clearFilter')
                             localStorage.removeItem('selectedFilters');
@@ -314,7 +314,7 @@
                                 }
                             })
                         }
-
+                        // Function that mimics the page
                         function printPage() {
                             window.print();
                         }
